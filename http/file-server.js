@@ -25,6 +25,35 @@ var server = http.createServer(function (request, response) {
             response.writeHead(200);
             // 将文件流导向response:
             fs.createReadStream(filepath).pipe(response);
+        } else if (!err && stats.isDirectory()) {
+            // 没有出错并且请求的是目录,则在目录下依次搜索index.html、default.html，如果找到了，就返回HTML文件的内容。
+            fs.readFile(filepath + '/index.html', function (err, data) {
+                if (!err) {
+                    console.log('200' + request.url);
+                    // 发送200响应:
+                    response.writeHead(200);
+                    // 将文件流导向response:
+                    fs.createReadStream(filepath + '/index.html').pipe(response);
+                } else {
+                    fs.readFile(filepath + '/default.html', function (err, data) {
+                        if (!err) {
+                            console.log('200' + request.url);
+                            // 发送200响应:
+                            response.writeHead(200);
+                            // 将文件流导向response:
+                            fs.createReadStream(filepath + '/default.html').pipe(response);
+                        } else {
+                            // 出错了或者文件不存在:
+                            console.log('404' + request.url);
+                            // 发送404响应:
+                            response.writeHead(404);
+                            response.end('404 Not Found');
+                        }
+                    });
+                }
+            });
+
+            // (fs.createReadStream(filepath + '/index.html') || fs.createReadStream(filepath + '/default.html')).pipe(response);
         } else {
             // 出错了或者文件不存在:
             console.log('404' + request.url);
